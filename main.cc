@@ -76,8 +76,11 @@ int main()
     std::string command = " -noborder -x 2560 -y 1440  -loop 0";
     GetAllFormatFiles(FilePath, Files, FileFormat);
 	std::cout << "Numbers\t" << '|' << '\t' << "Videos" << std::endl;
-    for (int i = 0; i < Files.size(); i++) std::cout << i << '\t' << '|'  << '\t' << (FileDir + Files[i]).c_str() << std::endl;
+    for (int i = 0; i < Files.size(); i++) {
+		std::cout << i << '\t' << '|'  << '\t' << (FileDir + Files[i]).c_str() << std::endl;
+	}
 	std::cout << "Which one you need?\n";
+	std::cout << "Input: ";
 	int num;
 	std::cin >> num;
 	PlayVideo(FileDir, LPWSTR((" " + FileDir + Files[num] + command).c_str()));

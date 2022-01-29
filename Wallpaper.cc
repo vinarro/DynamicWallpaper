@@ -3,6 +3,7 @@
 #include <io.h>
 #include <fstream>
 #include <string>
+#include <cstdlib>
 #include <vector>
 #include <tchar.h>
 
@@ -44,10 +45,24 @@ BOOL CALLBACK EnumWindowsProc(_In_ HWND hwnd, _In_ LPARAM Lparam) {
 	if (hDefView != 0) {
 		// Find the next window which's class name is WorkerW
 		HWND hWorkerw = FindWindowEx(0, hwnd, _T("WorkerW"), 0);
-		ShowWindow(hWorkerw, SW_HIDE);
+		HWND hFfplay = FindWindow(_T("SDL_app"), 0); // Video window
+		SetWindowPos(hFfplay, NULL, 0, 0, 2560, 1440, SWP_SHOWWINDOW); // Move to a suitable position
+		SetParent(hFfplay, hWorkerw);
 		return FALSE;	
 	}
 	return TRUE;
+}
+
+void BeforeExit() {
+	std::string FileDir = GetProgramDir();
+	STARTUPINFO si { sizeof(si) }; 
+	PROCESS_INFORMATION pi{ 0 };
+	if (CreateProcess(LPSTR((FileDir + "\\refreshWallpaper.exe").c_str()), NULL, 0, 0, 0, 0, 0, 0, &si, &pi)) {
+		std::cout << std::endl << "Create process successfully" << std::endl;
+	}
+	WaitForSingleObject(pi.hProcess, INFINITE);
+    CloseHandle ( pi.hProcess );
+    CloseHandle ( pi.hThread );
 }
 
 void PlayVideo(std::string FileDir, LPWSTR lpParameter) {
@@ -55,11 +70,8 @@ void PlayVideo(std::string FileDir, LPWSTR lpParameter) {
 	PROCESS_INFORMATION pi{ 0 };
     if (CreateProcess(LPSTR((FileDir + "\\ffplay.exe").c_str()), LPSTR(lpParameter), 0, 0, 0, 0, 0, 0, &si, &pi)) {
 		Sleep(200);
-		HWND hFfplay = FindWindow(_T("SDL_app"), 0); // Video window
 		HWND hProgman = FindWindow(_T("Progman"), 0); // Find the PM window
 		SendMessageTimeout(hProgman, 0x52C, 0, 0, 0, 100, 0); // Send message
-		SetParent(hFfplay, hProgman);
-		SetWindowPos(hFfplay, NULL, 0, 0, 2560, 1440, SWP_SHOWWINDOW); // Move to a suitable position
 		EnumWindows(EnumWindowsProc, 0); // Set video window to PM window's Subwindow
 	}
 	WaitForSingleObject(pi.hProcess, INFINITE);
@@ -67,8 +79,8 @@ void PlayVideo(std::string FileDir, LPWSTR lpParameter) {
     CloseHandle ( pi.hThread );
 }
 
-int main()
-{
+int main() {
+	atexit (BeforeExit);
     std::vector<std::string> Files;
     std::string FilePath = ".\\videos";
     std::string FileFormat = ".mp4";
